@@ -64,4 +64,11 @@ menu "Example Configuration"
             bool "WAPI PSK"
     endchoice
 
+    config BROKER_URL
+        string "MQTT Broker URL"
+        default "mqtt://myserver"
+        help
+            URL of the MQTT broker to connect to.
+            Format: mqtt://hostname or mqtt://hostname:port
+
 endmenu
