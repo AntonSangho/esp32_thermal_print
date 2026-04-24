@@ -5,6 +5,10 @@ dependencies:
 
   espressif/esp_hosted:
     version: "1.4.*"
+  espressif/es8311:
+    version: "^1.0.0"
+  espressif/usb_host_cdc_acm:
+    version: "2.*"
   ## Required IDF version
   idf:
-    version: ">=4.1.0"
+    version: ">=5.0"

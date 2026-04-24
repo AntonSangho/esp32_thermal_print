@@ -71,4 +71,103 @@ menu "Example Configuration"
             URL of the MQTT broker to connect to.
             Format: mqtt://hostname or mqtt://hostname:port
 
+    choice EXAMPLE_MODE
+        prompt "I2S Example mode"
+        default EXAMPLE_MODE_MUSIC
+        help
+            Select I2S example work mode
+
+        config EXAMPLE_MODE_MUSIC
+            bool "music"
+        config EXAMPLE_MODE_ECHO
+            bool "echo"
+    endchoice
+
+    choice EXAMPLE_SELECT_MIC_GAIN
+        prompt "Set MIC gain"
+        depends on EXAMPLE_MODE_ECHO
+        default MIC_GAIN_18DB
+        help
+            Select mic gain for echo mode
+
+        config MIC_GAIN_0DB
+            bool "0dB"
+        config MIC_GAIN_6DB
+            bool "6dB"
+        config MIC_GAIN_12DB
+            bool "12dB"
+        config MIC_GAIN_18DB
+            bool "18dB"
+        config MIC_GAIN_24DB
+            bool "24dB"
+        config MIC_GAIN_30DB
+            bool "30dB"
+        config MIC_GAIN_36DB
+            bool "36dB"
+        config MIC_GAIN_42DB
+            bool "42dB"
+    endchoice
+
+    config EXAMPLE_MIC_GAIN
+        int
+        default 0 if MIC_GAIN_0DB
+        default 1 if MIC_GAIN_6DB
+        default 2 if MIC_GAIN_12DB
+        default 3 if MIC_GAIN_18DB
+        default 4 if MIC_GAIN_24DB
+        default 5 if MIC_GAIN_30DB
+        default 6 if MIC_GAIN_36DB
+        default 7 if MIC_GAIN_42DB
+
+    config EXAMPLE_VOICE_VOLUME
+        int "Voice volume"
+        range 0 100
+        default 60
+        help
+            Set voice volume
+
+endmenu
+
+menu "LED Blink Configuration"
+
+    config BLINK_GPIO
+        int "LED GPIO number"
+        range 0 54
+        default 20
+        help
+            GPIO number for the blink LED. Must connect LED + 330 ohm
+            resistor between this pin and GND. GPIO 20 is recommended
+            as it is unassigned on ESP32-P4-Nano.
+
+    config BLINK_PERIOD_MS
+        int "Blink period in milliseconds"
+        range 100 5000
+        default 500
+        help
+            LED blink period in milliseconds.
+
+endmenu
+
+menu "USB Printer Configuration"
+
+    config PRINTER_VID
+        hex "Thermal printer USB VID (hex)"
+        default 0x1504
+        help
+            USB Vendor ID of the thermal printer.
+            Default: 0x1504 (Bixolon SRP-330II)
+
+    config PRINTER_PID
+        hex "Thermal printer USB PID (hex)"
+        default 0x006e
+        help
+            USB Product ID of the thermal printer.
+            Default: 0x006e (Bixolon SRP-330II)
+
+    config PRINTER_INTERFACE
+        int "CDC interface number"
+        default 0
+        help
+            USB CDC interface number to open. Usually 0.
+
 endmenu
