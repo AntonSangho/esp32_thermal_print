@@ -1,230 +1,124 @@
-# ESP32-P4-Nano Thermal Printer Control
+# ESP32-P4-Nano 열감지 프린터 제어 프로젝트
 
-**MVP (Minimum Viable Product)**: Thermal printer control via USB, with text and image printing capabilities.
+## 프로젝트 개요
+Waveshare ESP32-P4-Nano 보드를 이용하여 Bixolon SRP-330II 열감지식 프린터를 제어하는 IoT 프로젝트입니다. 마이크로 스위치 버튼으로 프린터에 이미지를 출력할 수 있습니다.
 
-## Overview
+## 주요 기능
 
-This project implements thermal receipt printer support on the Waveshare ESP32-P4-Nano board using ESP-IDF v5.4. The board connects to a Bixolon SRP-330II thermal printer via USB and supports both text and bitmap image printing using ESC/POS commands.
+### ✅ 완료된 Phase
+| Phase | 기능 | 상태 |
+|-------|------|------|
+| #1 | ESP-IDF HelloWorld | ✅ 완료 |
+| #2 | WiFi Station (ESP32-C6) | ✅ 완료 |
+| #3 | MQTT Pub/Sub | ✅ 완료 |
+| #4 | I2S Audio (ES8311) | ✅ 완료 |
+| **3.5** | **버튼 + 열감지 프린터** | **✅ 완료** |
 
-**Board**: Waveshare ESP32-P4-Nano (ESP32-P4 RISC-V dual-core, 16MB flash)  
-**Printer**: Bixolon SRP-330II (VID=0x1504, PID=0x006e, USB CDC ACM class)  
-**Interface**: USB OTG (UTMI HS port on second USB connector)
+### Phase 3.5: 버튼 제어 프린터 출력
+- **GPIO 3 마이크로 스위치**: 30ms 디바운스 처리
+- **USB 열감지 프린터**: Bixolon SRP-330II (VID:0x1504, PID:0x006e)
+- **이미지 출력**: PBM 형식, 1.33배 스케일 (72mm 최적화)
+- **카운팅**: 버튼 누름 횟수 추적
 
----
+## 하드웨어 사양
 
-## MVP Features
+### 메인 보드
+- **보드**: Waveshare ESP32-P4-Nano
+- **프로세서**: ESP32-P4 (RISC-V 듀얼코어, 400MHz)
+- **플래시**: 16MB 외부 + 2MB 내부
+- **RAM**: ~606KB 가용
+- **MAC**: 30:ed:a0:e0:fc:fb
 
-### Phase 1: GPIO LED Control ✅
-- **Status**: Complete
-- **Source**: `main/led_blink_main.c`
-- **Test**: GPIO 20 LED blink at 500ms interval
-- **Purpose**: Verify build system and basic ESP-IDF functionality
+### 주변 기기
+| 기기 | 사양 | 연결 |
+|------|------|------|
+| **버튼** | 마이크로 스위치 | GPIO 3 |
+| **프린터** | Bixolon SRP-330II | USB CDC ACM |
+| **코덱** | ES8311 (오디오) | I2C/I2S |
+| **앰프** | NS4150B | GPIO 53 |
+| **WiFi** | ESP32-C6 코프로세서 | UART |
 
-### Phase 2: USB CDC Text Printing ✅
-- **Status**: Complete  
-- **Source**: `main/usb_printer_main.c`
-- **Features**:
-  - Auto-detect Bixolon SRP-330II via VID:PID
-  - ESC/POS text commands:
-    - `0x1B 0x40` - Printer initialization
-    - `0x1B 0x61 0x01` - Center align
-    - `0x0A` - Line feed
-    - `0x1D 0x56 0x41 0x00` - Paper auto-cut
-  - Successfully prints test messages
-- **Verified Output**: 
-  - ✅ "Hello ESP32!"
-  - ✅ "USB Printer Test"
+## 프린터 사양
+- **모델**: Bixolon SRP-330II
+- **용지 너비**: 80mm (표준)
+- **실제 인쇄 너비**: 72mm (최대)
+- **해상도**: 180 DPI (7 dots/mm)
+- **인터페이스**: USB CDC ACM
+- **인쇄 속도**: 220mm/sec
 
-### Phase 3: Bitmap Image Printing ✅
-- **Status**: Complete
-- **Source**: `main/usb_printer_image_main.c`
-- **Features**:
-  - PBM (Portable Bitmap) image embedding: `main/logo.pbm`
-  - Image dimensions: 384×799 pixels (58mm paper width @ 203 DPI)
-  - P4 (raw 1-bit) PBM header parsing
-  - ESC/POS raster image command: `0x1D 0x76 0x30` (GS v 0)
-  - Automatic paper feed (3 lines) and cut after image
-- **Image Conversion**:
-  ```bash
-  convert input.png -resize 384x -threshold 50% -depth 1 logo.pbm
-  ```
+## 개발 환경
 
----
+### 필수 소프트웨어
+- **ESP-IDF**: v5.4 (at `~/projects/esp-idf-v5.4`)
+  - ⚠️ v6.1-dev는 칩 revision v3.1+ 필요
+- **Python**: 3.12.7+
+- **시리얼 포트**: `/dev/ttyACM0`, 115200 baud
 
-## Hardware Requirements
-
-- **ESP32-P4-Nano** evaluation board (Waveshare)
-- **Bixolon SRP-330II** thermal receipt printer (or compatible CDC ACM thermal printer)
-- USB-A to micro-USB/USB-C cable for printer connection
-- External LED + 330Ω resistor (GPIO 20 to GND) for Phase 1 test
-
-### Printer Compatibility
-
-Any thermal printer supporting:
-- USB CDC ACM class (virtual serial port)
-- ESC/POS command set
-
-To find your printer's VID:PID:
+### 빠른 시작
 ```bash
-lsusb | grep -i printer
-# Update CONFIG_PRINTER_VID and CONFIG_PRINTER_PID in Kconfig
-```
-
----
-
-## Build & Flash
-
-### Environment Setup
-```bash
+# 환경 설정
 export IDF_PATH=~/projects/esp-idf-v5.4
-. $IDF_PATH/export.sh
-```
+source $IDF_PATH/export.sh
 
-### Build
-```bash
+# 빌드
 idf.py build
-```
 
-### Flash
-```bash
+# 플래싱
 idf.py -p /dev/ttyACM0 flash
+
+# 모니터링
+stty -F /dev/ttyACM0 115200 raw -echo && timeout 15 cat /dev/ttyACM0
 ```
 
-### Monitor (Optional - not required since printer output confirms success)
+## 이미지 형식 가이드
+
+### PBM (Portable Bitmap) 포맷
+프린터는 **PBM P4 바이너리** 형식만 지원합니다:
+- **색상**: 흑백 1비트 (검은색/흰색만)
+- **너비**: 384 pixels 권장 (1.33배 확대 → 72mm)
+- **해상도**: 180 DPI 기준
+
+### 이미지 생성 (ImageMagick)
 ```bash
-stty -F /dev/ttyACM0 115200 raw -echo && timeout 10 cat /dev/ttyACM0
+convert input.png -resize 384x -monochrome output.pbm
 ```
 
----
+### 이미지 생성 (Python)
+```python
+from PIL import Image
 
-## Configuration
-
-Edit `main/Kconfig.projbuild` to customize:
-
-- **Printer VID/PID**: Default Bixolon (0x1504/0x006e)
-- **Printer width**: 384 pixels (58mm), or 576 (80mm)
-
-### Switch Between Phases
-
-Edit `main/CMakeLists.txt` to change active source:
-```cmake
-idf_component_register(SRCS "usb_printer_image_main.c"  # Change this
-                    PRIV_REQUIRES usb esp_driver_gpio
-                    INCLUDE_DIRS "."
-                    EMBED_FILES "logo.pbm")
+img = Image.open('input.png')
+img = img.resize((384, int(384 * img.height / img.width)))
+img = img.convert('1')
+img.save('output.pbm')
 ```
 
-Options:
-- `led_blink_main.c` - Phase 1
-- `usb_printer_main.c` - Phase 2
-- `usb_printer_image_main.c` - Phase 3 (current)
+## 사용 방법
 
----
+### 버튼으로 프린터 제어
+1. **프린터 연결**: USB 포트에 연결
+2. **기기 시작**: 전원 공급
+3. **버튼 누르기**: GPIO 3 마이크로 스위치
+   - 프린터에서 logo.pbm 이미지 출력
 
-## Binary Size
-
-| Phase | Source File | Size | Partition Headroom |
-|-------|-------------|------|-------------------|
-| 1 | led_blink_main.c | 427 KB | 80% |
-| 2 | usb_printer_main.c | 482 KB | 77% |
-| 3 | usb_printer_image_main.c | 523 KB | 75% |
-
-All fit comfortably in 2MB factory partition. Phase 4 (WiFi) may require optimization or partition expansion.
-
----
-
-## Verified Output
-
-### Phase 2 - Text Printing
+## 프로젝트 구조
 ```
-[Printer Output]
-        Hello ESP32!
-      USB Printer Test
-─────────────────────── (cut line)
+.
+├── CLAUDE.md                        # 개발 가이드 (한글)
+├── README.md                        # 이 파일
+├── main/
+│   ├── usb_printer_button_main.c    # Phase 3.5 (현재)
+│   ├── logo.pbm                     # 임베드 이미지
+│   └── ...
+└── build/                           # 빌드 아티팩트
 ```
 
-### Phase 3 - Image Printing
-```
-[Printer Output]
-   Image Printing Test
-   [384x799 bitmap image]
-─────────────────────── (cut line)
-```
+## 참고 자료
+- [ESP-IDF 공식 문서](https://docs.espressif.com/projects/esp-idf/)
+- [Bixolon SRP-330II](https://www.bixolon.com/)
+- [PBM 포맷](https://en.wikipedia.org/wiki/Netpbm)
 
 ---
 
-## Architecture
-
-### USB CDC ACM Integration
-- **Component**: `espressif/usb_host_cdc_acm:2.*` (managed component)
-- **Hardware**: UTMI HS port (`USB_DWC_HS`)
-- **Port**: Second USB OTG connector on board (not JTAG port)
-- **Features**: Auto device detection, blocking transfers, configurable buffers
-
-### FreeRTOS Task Structure
-1. **usb_lib_task** (priority 20): USB host event loop
-2. **printer_task** (priority 5): CDC device polling, print job execution
-
-### Embedded Resources
-- **logo.pbm**: 38 KB PBM image embedded in firmware via `EMBED_FILES`
-- **Device drivers**: esp_driver_gpio, esp_driver_usb_host
-
----
-
-## Roadmap
-
-### Completed ✅
-- [x] Phase 1: GPIO LED control
-- [x] Phase 2: USB CDC text printing
-- [x] Phase 3: Bitmap image printing
-
-### In Progress 🚧
-- [ ] Phase 4: WiFi SoftAP + HTTP web server
-
-### Future Phases
-- [ ] Multi-image support (SPIFFS partition)
-- [ ] Print job queue and history
-- [ ] Mobile app integration
-- [ ] Thermal paper width auto-detection
-- [ ] Print preview on ESP32-P4 display (if connected)
-
----
-
-## Known Limitations
-
-1. **Single image per build**: Change `logo.pbm` for different images
-2. **No persistent storage**: Print jobs not saved across reboot
-3. **SoftAP only** (Phase 4): No existing WiFi AP support
-4. **Fixed baud rate**: CDC ACM parameters hardcoded (no runtime config)
-
----
-
-## Testing Checklist
-
-- [x] Build firmware without errors
-- [x] Flash to board successfully
-- [x] Printer auto-detected on USB connection
-- [x] Text output prints correctly
-- [x] Image output renders correctly
-- [x] Paper feed and cut commands execute
-- [x] Multiple prints work (no lockup)
-
----
-
-## References
-
-- [ESP-IDF Documentation](https://docs.espressif.com/projects/esp-idf/en/stable/esp32p4/)
-- [ESC/POS Command Set](https://www.epson.com.tw/pos)
-- [USB CDC ACM Component](https://components.espressif.com/components/espressif/usb_host_cdc_acm)
-- [Bixolon SRP-330II Manual](https://www.bixolon.com/en/product/mobile-printers/srp-330ii)
-
----
-
-## License
-
-This project uses ESP-IDF and Espressif components under Apache 2.0 license.
-
----
-
-**Last Updated**: 2026-04-24  
-**Version**: MVP (v0.1)
+**최종 업데이트**: 2026-04-24
+**상태**: ✅ Phase 3.5 완료 및 테스트 완료
