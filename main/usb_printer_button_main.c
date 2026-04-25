@@ -17,8 +17,8 @@ static const char *TAG = "USB_PRINTER_BUTTON";
 #define BUTTON_PIN GPIO_NUM_3
 #define BUTTON_ACTIVE_LOW 1
 
-extern const uint8_t logo_pbm_start[] asm("_binary_logo_pbm_start");
-extern const uint8_t logo_pbm_end[] asm("_binary_logo_pbm_end");
+extern const uint8_t img_1_pbm_start[] asm("_binary_1_pbm_start");
+extern const uint8_t img_1_pbm_end[] asm("_binary_1_pbm_end");
 
 static cdc_acm_dev_hdl_t cdc_dev = NULL;
 static uint32_t press_count = 0;
@@ -68,8 +68,8 @@ static void parse_pbm_and_print(void)
         return;
     }
 
-    const uint8_t *pbm_data = logo_pbm_start;
-    size_t pbm_size = logo_pbm_end - logo_pbm_start;
+    const uint8_t *pbm_data = img_1_pbm_start;
+    size_t pbm_size = img_1_pbm_end - img_1_pbm_start;
 
     ESP_LOGI(TAG, "PBM size: %zu bytes", pbm_size);
 
